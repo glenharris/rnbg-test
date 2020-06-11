@@ -1,7 +1,8 @@
 /* eslint-disable prettier/prettier */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, FlatList, StyleSheet, Switch, Text, View } from 'react-native';
 import { Geofence } from 'react-native-background-geolocation';
+import { interval } from 'rxjs';
 import { GeofenceTest } from './GeofenceTest';
 import { GeoLocation, GeoLocationHelper } from './GeoLocation';
 import { useObservable } from './Observable';
@@ -22,9 +23,15 @@ export function GeofenceComponent(props: { geofence: Geofence, referenceLocation
 }
 
 export function TestComponent(props: { geofenceTest: GeofenceTest }) {
-    const now = Date.now();
     const { geofenceTest } = props;
     const [status] = useObservable(geofenceTest.status);
+    const [now, nowDispatch] = useState<Date>(() => new Date());
+    console.info('Render at', now.toISOString());
+    useEffect(() => {
+        const observable = interval(5000);
+        const subscription = observable.subscribe(() => nowDispatch(new Date()));
+        return () => subscription.unsubscribe();
+    }, []);
     if (status) {
         const { geofences, state, enteredGeofences, closeGeofences } = status;
         let shortState;
@@ -36,7 +43,7 @@ export function TestComponent(props: { geofenceTest: GeofenceTest }) {
         }
         return (
             <>
-                <Text>{`Now Millis: ${now}`}</Text>
+                <Text>{`Current Time: ${now.toISOString()}`}</Text>
                 <Button onPress={() => geofenceTest.updateGeofences()} title="Update Geofences" />
                 <Button onPress={() => geofenceTest.updateDistances()} title="Update Distances" />
                 <Button onPress={() => geofenceTest.updateState()} title="Update State" />
